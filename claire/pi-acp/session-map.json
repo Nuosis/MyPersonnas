@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "sessions": {
+    "019dc0fd-078f-7289-a2c8-46ad14a9a9d3": {
+      "sessionId": "019dc0fd-078f-7289-a2c8-46ad14a9a9d3",
+      "cwd": "/Users/devflow/.openclaw/workspace/pi",
+      "sessionFile": "/Users/devflow/.pi/agent/sessions/--Users-devflow-.openclaw-workspace-pi--/2026-04-24T19-35-01-264Z_019dc0fd-078f-7289-a2c8-46ad14a9a9d3.jsonl",
+      "updatedAt": "2026-04-24T19:35:01.280Z"
+    },
+    "019dc107-8c6a-7471-ac90-a389d65a7475": {
+      "sessionId": "019dc107-8c6a-7471-ac90-a389d65a7475",
+      "cwd": "/Users/devflow/.openclaw/workspace/pi",
+      "sessionFile": "/Users/devflow/.pi/agent/sessions/--Users-devflow-.openclaw-workspace-pi--/2026-04-24T19-46-30-634Z_019dc107-8c6a-7471-ac90-a389d65a7475.jsonl",
+      "updatedAt": "2026-04-24T19:46:30.705Z"
+    },
+    "019dc109-7b69-715a-9f92-10dc3d770c8f": {
+      "sessionId": "019dc109-7b69-715a-9f92-10dc3d770c8f",
+      "cwd": "/Users/devflow/.openclaw/workspace/pi",
+      "sessionFile": "/Users/devflow/.pi/agent/sessions/--Users-devflow-.openclaw-workspace-pi--/2026-04-24T19-48-37-354Z_019dc109-7b69-715a-9f92-10dc3d770c8f.jsonl",
+      "updatedAt": "2026-04-24T19:48:37.408Z"
+    },
+    "019dc10b-9228-71e9-9fe9-62b831e40cdc": {
+      "sessionId": "019dc10b-9228-71e9-9fe9-62b831e40cdc",
+      "cwd": "/Users/devflow/.openclaw/workspace/pi",
+      "sessionFile": "/Users/devflow/.pi/agent/sessions/--Users-devflow-.openclaw-workspace-pi--/2026-04-24T19-50-54-248Z_019dc10b-9228-71e9-9fe9-62b831e40cdc.jsonl",
+      "updatedAt": "2026-04-24T19:50:54.336Z"
+    },
+    "019dc10c-1716-77ec-b3fe-91bf91b69a30": {
+      "sessionId": "019dc10c-1716-77ec-b3fe-91bf91b69a30",
+      "cwd": "/Users/devflow/.openclaw/workspace/pi",
+      "sessionFile": "/Users/devflow/.pi/agent/sessions/--Users-devflow-.openclaw-workspace-pi--/2026-04-24T19-51-28-279Z_019dc10c-1716-77ec-b3fe-91bf91b69a30.jsonl",
+      "updatedAt": "2026-04-24T19:51:28.295Z"
+    },
+    "019dc10c-5c5f-7798-a055-eab111e79d0e": {
+      "sessionId": "019dc10c-5c5f-7798-a055-eab111e79d0e",
+      "cwd": "/Users/devflow/.openclaw/workspace/pi",
+      "sessionFile": "/Users/devflow/.pi/agent/sessions/--Users-devflow-.openclaw-workspace-pi--/2026-04-24T19-51-46-016Z_019dc10c-5c5f-7798-a055-eab111e79d0e.jsonl",
+      "updatedAt": "2026-04-24T19:51:46.028Z"
+    },
+    "019dc10e-da08-7449-ba67-0b614c0086f5": {
+      "sessionId": "019dc10e-da08-7449-ba67-0b614c0086f5",
+      "cwd": "/Users/devflow/.openclaw/workspace/pi",
+      "sessionFile": "/Users/devflow/.pi/agent/sessions/--Users-devflow-.openclaw-workspace-pi--/2026-04-24T19-54-29-256Z_019dc10e-da08-7449-ba67-0b614c0086f5.jsonl",
+      "updatedAt": "2026-04-24T19:54:29.305Z"
+    },
+    "019dc10f-47bc-7019-b92e-d07769185349": {
+      "sessionId": "019dc10f-47bc-7019-b92e-d07769185349",
+      "cwd": "/Users/devflow/.openclaw/workspace/pi",
+      "sessionFile": "/Users/devflow/.pi/agent/sessions/--Users-devflow-.openclaw-workspace-pi--/2026-04-24T19-54-57-341Z_019dc10f-47bc-7019-b92e-d07769185349.jsonl",
+      "updatedAt": "2026-04-24T19:54:57.365Z"
+    }
+  }
+}

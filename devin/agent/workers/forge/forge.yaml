@@ -1,0 +1,46 @@
+# Forge Configuration
+# Defines what can be forged and how
+
+# User-facing list — shown in /forge picker
+forge-list:
+  - name: worker
+    label: "New Worker"
+    description: "Create a new Pi worker agent with definition, tools, and system prompt"
+  - name: chain
+    label: "Agent Chain"
+    description: "Create a new agent chain workflow"
+  - name: extension
+    label: "Extension"
+    description: "Create a new Pi extension with tools, commands, and events"
+  - name: skill
+    label: "Skill"
+    description: "Create a new skill with triggers and documentation"
+
+# Full configurations for each forge item
+worker:
+  description: "Create a new task-execution worker"
+  experts:
+    - agent-expert
+    - ext-expert
+    - skill-expert
+    - config-expert
+    - eval-expert
+
+chain:
+  description: "Create a new agent chain"
+  experts:
+    - agent-expert
+    - config-expert
+
+extension:
+  description: "Create a new extension"
+  experts:
+    - ext-expert
+    - config-expert
+    - skill-expert
+
+skill:
+  description: "Create a new skill package"
+  experts:
+    - skill-expert
+    - config-expert

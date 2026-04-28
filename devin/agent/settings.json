@@ -1,0 +1,13 @@
+{
+  "lastChangelogVersion": "0.70.2",
+  "defaultProvider": "minimax",
+  "defaultModel": "MiniMax-M2.7",
+  "defaultThinkingLevel": "medium",
+  "extensions": [
+    "./extensions/mypi-commands",
+    "./extensions/mypi-evals",
+    "./extensions/find-guard",
+    "./extensions/task-mode",
+    "./extensions/subagent"
+  ]
+}

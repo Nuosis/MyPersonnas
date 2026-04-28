@@ -1,0 +1,226 @@
+playwright-run:
+  description: "Run a single Playwright spec file or test with pre-flight validation and smart reporting."
+  steps:
+    - agent: e2e-health-check
+      prompt: |
+        Check if the target app is healthy and ready for tests.
+
+        Determine target from $ORIGINAL:
+        - Extract the file path from the run_chain call (e.g., tests/e2e/admin-flows.spec.ts)
+        - File should be relative to current working directory or absolute
+
+        Health checks to perform:
+        1. Check if target has playwright.config.ts (find in parent dirs)
+        2. Check if app is running (curl localhost for HTTP response)
+        3. Backend health endpoint (optional - don't block on this)
+
+        Default URLs for chi-webapp:
+        - Frontend: http://localhost:59001 (must return 200)
+        - Backend: http://localhost:59000 (must return 200)
+
+        ## If something fails, use chain_stop
+        If any health check fails and you cannot proceed:
+        - Call chain_stop with:
+          - received: what $ORIGINAL asked you to check
+          - did: what checks you ran
+          - issues: what failed and how to fix it
+          - status: "blocked" (waiting on something) or "error" (broke)
+        - Example: "Backend at localhost:59000 not responding (got 404). Restart the backend container."
+
+        ## If all healthy:
+        - Report "All systems ready"
+        - Output the __READY__ marker:
+        __READY__:{"file":"path/to/spec.ts","frontend":"http://localhost:59001","backend":"http://localhost:59000"}__
+
+    - agent: e2e-test-runner
+      prompt: |
+        Read $INPUT (output from health-check step)
+        Only proceed if { ready: true }. If not ready, stop.
+
+        Extract from $INPUT or $ORIGINAL:
+        - file: path to .spec.ts file
+        - testName: optional specific test name/ID to run
+
+        Set up environment:
+        export NEXT_PUBLIC_BASE_URL=http://localhost:59001
+        export API_BASE_URL=http://localhost:59000
+
+        Run tests:
+        - cd to directory containing playwright.config.ts
+        - Single test: npx playwright test "{file}" --grep "{testName}" --workers=1
+        - Full file: npx playwright test "{file}" --workers=1
+
+        If tests hang for >90s, kill and report as TIMEOUT.
+
+        Capture output: pass count, fail count, skip count, error messages
+        Output: { testsRun: true, results: { passed, failed, skipped, errors } }
+
+    - agent: e2e-reporter
+      prompt: |
+        Read $INPUT (output from test-runner step)
+
+        Generate summary report:
+
+        # Playwright E2E Results
+
+        ## Summary
+        - Passed: N
+        - Failed: M
+        - Skipped: K
+
+        ## Failures
+        For each failure:
+        - Test name and location
+        - Error message
+        - Suggested fix
+
+        ## Next Steps
+        - If failures < 5: "Fix these and re-run"
+        - If failures > 5: "Consider running in batches to isolate issues"
+        - If TIMEOUT: "App may be unstable, try restarting"
+
+        Exit code: 0 if all pass, 1 if any failures
+
+personality-test:
+  description: "Run personality dimensions evaluation - test if personality settings affect agent responses"
+  steps:
+    - prompt: |
+        This chain runs the personality-dimensions eval.
+        
+        You need to:
+        1. For each condition (baseline, low, high) and each prompt (P1-P5), generate an agent response
+        2. Score each response using LLM-as-judge (call scorer-llm)
+        3. Run assertions against the scores
+        
+        The scenario is at: /Users/devflow/.pi/agent/evals/scenarios/personality-dimensions/scenario.yaml
+        The scoring prompt is at: /Users/devflow/.pi/agent/evals/scenarios/personality-dimensions/artifacts/scoring-prompt.md
+        
+        Use the eval-runner.ts as reference for the full flow.
+        
+        Output: JSON with scores for all conditions/prompts
+        
+    - prompt: |
+        Score all responses using LLM judge.
+        
+        For each response, call an LLM with the scoring-prompt.md and the response.
+        Parse the JSON scores and aggregate.
+        
+        Output: { scores: [...], conditions: {...}, deltas: {...} }
+        
+    - prompt: |
+        Run assertions and produce final eval results.
+        
+        Use the assertion checks from scorer.ts:
+        - all_dims_below, all_dims_above (internal consistency)
+        - delta (external consistency)
+        - cronbach_alpha (reliability)
+        - baseline_different, baseline_not_uniform (controls)
+        
+        Output: { evals: {INT-001: {passed, score}, ...}, summary: {...} }
+
+flow-doc:
+  description: "Generate user flow documentation with Playwright test coverage. Run after implementation is complete."
+  steps:
+    - agent: flow-scanner
+      prompt: |
+        Parse $ORIGINAL to determine:
+        1. Target repo: resolve shorthand (e.g., "chi-webapp") to full path, or use current directory if implicit
+        2. Scope: extract any focus filter (e.g., "newhire endpoints", "/api/v1/admin/*")
+
+        Task example: "flow for putman city's newhire endpoints"
+        → repo: current dir (or find putman city repo)
+        → scope: newhire-related endpoints/components only
+
+        Then:
+        1. Find all API calls (fetch/axios) in app/ and components/
+        2. Find all navigation (router.push/useRouter)
+        3. Find all forms and state machines
+        4. Categorize each as Flow (document) or Display (ignore)
+        5. If scope specified, filter to that scope
+        6. Create {repo}/docs/flows/component-index.md
+
+        Decision tree:
+        - Multi-step logic + branching + roles + errors = FLOW (document)
+        - Pure display + generic UI = DISPLAY (ignore)
+
+        Output summary: N flows identified, M display ignored, K undocumented
+
+    - agent: flow-writer
+      prompt: |
+        Read the component index at $INPUT (path to component-index.md)
+
+        Parse the repo path from $INPUT (strip "/docs/flows/component-index.md")
+
+        For each Flow in the index (filtered by scope if specified):
+        1. Create a flow doc at {repo}/docs/flows/users/{role}/{name}.md
+        2. Include Mermaid diagram with error branches
+        3. Include API summary table (method, path, source file)
+        4. Include test assertions (real Playwright selectors)
+        5. Note disabled/stubbed features
+
+        Priority:
+        - HIGH: Core business flows (engagements, surveys, invites)
+        - MEDIUM: Secondary flows (settings, management)
+        - LOW: Edge cases
+
+        If scope specified, only document flows matching that scope.
+
+        Output: list of flow doc paths created
+
+    - agent: flow-tester
+      prompt: |
+        Read the testing guides first:
+        - /Users/devflow/.openclaw/workspace/docs/testing-anti-patterns.md
+        - /Users/devflow/.openclaw/workspace/docs/how_to_playwright_right.md
+
+        Parse the repo path from $INPUT
+
+        For each flow doc in {repo}/docs/flows/users/ and {repo}/docs/flows/features/:
+        - If scope was specified, only test flows matching that scope
+
+        Create Playwright tests at {repo}/tests/e2e/flows/{flow-name}.spec.ts:
+        1. Use programmatic auth (API token, NOT UI login)
+        2. Use isolated tenant per suite (beforeAll/afterAll create/delete)
+        3. Use realistic locators (verify against DOM, not assumptions)
+        4. Skip RED tests with root-cause comment
+        5. Config must include: storageState, reuseExistingServer: true
+        6. Use BASE_URL from env, not hardcoded
+
+        DO NOT run the tests — write them only.
+
+        Output: list of test files created
+
+    - agent: flow-reviewer
+      prompt: |
+        Read the testing guides:
+        - /Users/devflow/.openclaw/workspace/docs/testing-anti-patterns.md
+        - /Users/devflow/.openclaw/workspace/docs/how_to_playwright_right.md
+
+        Parse the repo path from $INPUT
+
+        Verify compliance for {repo}/docs/flows/ and {repo}/tests/e2e/:
+
+        testing-anti-patterns.md:
+        - No test-only methods in production
+        - No testing mock existence (mocks isolate, not define)
+        - No mocking without understanding dependencies
+
+        how_to_playwright_right.md:
+        - Programmatic auth (API token, not UI login steps)
+        - Isolated tenant per run
+        - Realistic locators (verified against actual DOM)
+        - Skipped RED tests have root-cause comment
+        - Env-driven config (BASE_URL from env, not hardcoded)
+        - reuseExistingServer: true in playwright.config.ts
+
+        Flow doc quality:
+        - Mermaid covers happy path + error branches
+        - API table has correct HTTP methods
+        - Test assertions use real selectors (not pseudo-code)
+        - Disabled features explicitly noted
+        - component-index.md updated
+
+        Run the test suite: npx playwright test {repo}/tests/e2e/
+
+        Output: compliance report with must-fix/should-fix items
+        Mark each flow as APPROVED / NEEDS WORK / SKIP

@@ -1,0 +1,6 @@
+# Keep directory structure, ignore large data dirs
+history/*
+results/*
+
+# But keep .gitkeep files to maintain structure
+!.gitkeep

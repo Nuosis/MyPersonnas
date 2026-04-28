@@ -1,0 +1,14 @@
+full:
+  - scout
+  - planner
+  - worker
+  - reviewer
+
+info:
+  - scout
+  - reviewer
+
+plan:
+  - scout
+  - planner
+  - reviewer

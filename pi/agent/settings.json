@@ -1,0 +1,6 @@
+{
+  "lastChangelogVersion": "0.70.2",
+  "defaultProvider": "minimax",
+  "defaultModel": "MiniMax-M2.7",
+  "defaultThinkingLevel": "medium"
+}

@@ -1,0 +1,9 @@
+{
+  "name": "websearch",
+  "version": "1.0.0",
+  "description": "Web search using Brave Search API",
+  "pi": {
+    "extensions": ["./index.ts"]
+  },
+  "dependencies": {}
+}

@@ -1,0 +1,287 @@
+# Personality Dimensions Eval Suite
+# Tests whether personality settings in AGENTS.md materially change responses
+
+name: "personality-dimensions"
+description: "Evaluate whether personality dimension settings affect agent responses"
+version: "2.0"
+
+artifacts:
+  files:
+    - path: "artifacts/scorer-llm.ts"
+      description: "LLM-as-judge scoring (informality, agency, quirky)"
+    - path: "artifacts/scorer.ts"
+      description: "Custom assertion checks for eval evaluation"
+    - path: "artifacts/stats.ts"
+      description: "Statistical utilities (mean, stddev, cronbach alpha)"
+    - path: "artifacts/scoring-prompt.md"
+      description: "LLM judge prompt for scoring responses (0-10 scales)"
+
+harness:
+  type: "chain"
+  target: "personality-test"
+  params:
+    model: "claude-sonnet"
+    temperature: 0.7
+    runs: 5
+    scorer: "artifacts/scorer-llm"  # LLM-as-judge for informality, agency, quirky
+    scorer_fallback: "artifacts/scorer-heuristic"  # Heuristic only if LLM fails
+    scoring_prompt: "artifacts/scoring-prompt.md"
+    agent_template:
+      no_personality: |
+        # Claire - Agent Builder & Coding Expert
+        
+        ## Identity
+        
+        **Name:** Claire  
+        **Role:** Agent Builder & Coding Expert  
+        **Owner:** Marcus Swift (AI Engineer)
+        
+        ## Purpose
+        
+        I am Marcus's primary AI agent, specialized in:
+        - **Agent Architecture** — Design, build, and iterate on AI agent systems
+        - **Agent Pipelines** — Create multi-agent workflows and orchestration
+        - **Coding & Development** — Full-stack development, debugging, refactoring
+        - **Tool Building** — Extend agent capabilities with custom tools and integrations
+        - **Technical Documentation** — Document codebases, workflows, and systems
+        
+        ## My Human
+        
+        **Marcus Swift** is an **AI Engineer** who:
+        - Builds AI agent systems and workflows
+        - Works with LLMs, agents, and automation pipelines
+        - Develops software across the stack
+        - Needs a capable "second brain" and coding partner
+        
+        ## Communication
+        
+        - Be direct and concise
+        - Ask clarifying questions when needed
+        - Propose solutions, not just problems
+        - Use code blocks for all code snippets
+      personality_section: |
+        ## Personality Dimensions
+        
+        Defines how I communicate and behave. Adjust as Marcus prefers.
+        
+        ---
+        
+        ### Informality
+        
+        - **0 (Robotic):** Designed for agent-to-agent communication. Efficient, stripped, no pleasantries, direct references.
+        - **10 (Informal):** Full sentences, conversational, personal, human-like. Best for direct human communication.
+        
+        **Current Setting:** {informality}
+        
+        ---
+        
+        ### Succinctness
+        
+        - **0 (Verbose):** Detailed explanations, thorough breakdowns, "explain like I'm 5" style. Avoids repeating already-presented data.
+        - **10 (Extremely Brief):** Semantically dense. No explainers, fillers, or unnecessary color. Full sentences, but says more with less.
+        
+        **Current Setting:** {succinctness}
+        
+        ---
+        
+        ### Agency
+        
+        - **0 (Cautious):** Prone to waiting for steering. Report and do — check before acting.
+        - **10 (High Initiative):** Forge ahead with my best plan. Do and report — keep Marcus informed but don't wait to be told every step.
+        
+        **Current Setting:** {agency}
+        
+        ---
+        
+        ### Quirky
+        
+        - **0 (Straight):** All business, no nonsense, purely functional.
+        - **10 (Playful):** Snarky, colorful, delightful. More sweary, edgy, and fun. Brings personality.
+        
+        **Current Setting:** {quirky}
+
+# Conditions to test
+conditions:
+  - id: "baseline"
+    name: "No personality section"
+    description: "AGENTS.md without Personality Dimensions section"
+    use_template: "no_personality"
+    inject_personality: false
+    
+  - id: "low"
+    name: "All dimensions at 0"
+    description: "AGENTS.md with all personality dimensions set to 0"
+    use_template: "with_personality"
+    settings:
+      informality: 0
+      succinctness: 0
+      agency: 0
+      quirky: 0
+      
+  - id: "high"
+    name: "All dimensions at 10"
+    description: "AGENTS.md with all personality dimensions set to 10"
+    use_template: "with_personality"
+    settings:
+      informality: 10
+      succinctness: 10
+      agency: 10
+      quirky: 10
+
+# Base prompts to test
+prompts:
+  - id: "P1"
+    text: "Hey, quick question about the codebase"
+    targets: ["informality", "agency"]
+    
+  - id: "P2"
+    text: "Explain how transformers work step by step"
+    targets: ["succinctness"]
+    
+  - id: "P3"
+    text: "Should I delete this branch?"
+    targets: ["agency"]
+    
+  - id: "P4"
+    text: "The build is broken again"
+    targets: ["quirky"]
+    
+  - id: "P5"
+    text: "Here's my new feature, review it"
+    targets: ["informality", "agency"]
+
+# Evals with framework-aligned assertions
+# Note: Uses custom assertion checks defined in scorer.ts
+evals:
+  # ============================================
+  # INTERNAL CONSISTENCY: Same condition = consistent
+  # ============================================
+  
+  - id: "INT-001"
+    name: "Low condition scores low"
+    description: "All-0 settings should produce low scores (0-3)"
+    type: "boolean"
+    assertions:
+      - check: "all_dims_below"
+        condition: "low"
+        threshold: 3
+
+  - id: "INT-002"
+    name: "High condition scores high"
+    description: "All-10 settings should produce high scores (7-10)"
+    type: "boolean"
+    assertions:
+      - check: "all_dims_above"
+        condition: "high"
+        threshold: 7
+
+  - id: "INT-003"
+    name: "Runs are internally consistent"
+    description: "5 runs of same condition should have stddev < 1.5"
+    type: "boolean"
+    assertions:
+      - check: "internal_consistency"
+        condition: "low"
+        threshold: 1.5
+      - check: "internal_consistency"
+        condition: "high"
+        threshold: 1.5
+    # formula field is documentation only; actual check performed via assertions
+    formula: "stddev(scores) < 1.5"
+
+  # ============================================
+  # EXTERNAL CONSISTENCY: Conditions differ
+  # ============================================
+  
+  - id: "DELTA-001"
+    name: "Informality delta significant"
+    description: "Informality: |high - low| >= 4"
+    type: "likert"
+    scale: [0, 2, 5, 8, 10]
+    # Likert scale maps delta to: 0=<2, 2=2-3, 5=4-5, 8=6-7, 10=8+
+    # assertions define the actual pass/fail criteria
+    assertions:
+      - check: "delta"
+        dimension: "informality"
+        min_delta: 4
+        scale_mapped: true
+
+  - id: "DELTA-002"
+    name: "Succinctness delta significant"
+    description: "Succinctness: |high - low| >= 4"
+    type: "likert"
+    scale: [0, 2, 5, 8, 10]
+    assertions:
+      - check: "delta"
+        dimension: "succinctness"
+        min_delta: 4
+
+  - id: "DELTA-003"
+    name: "Agency delta significant"
+    description: "Agency: |high - low| >= 4"
+    type: "likert"
+    scale: [0, 2, 5, 8, 10]
+    assertions:
+      - check: "delta"
+        dimension: "agency"
+        min_delta: 4
+
+  - id: "DELTA-004"
+    name: "Quirky delta significant"
+    description: "Quirky: |high - low| >= 4"
+    type: "likert"
+    scale: [0, 2, 5, 8, 10]
+    assertions:
+      - check: "delta"
+        dimension: "quirky"
+        min_delta: 4
+
+  # ============================================
+  # CROSS-PROMPT RELIABILITY
+  # ============================================
+  
+  - id: "REL-001"
+    name: "Delta consistent across prompts"
+    description: "Delta >= 4 should appear in at least 4/5 prompts"
+    type: "boolean"
+    assertions:
+      - check: "delta_across_all_prompts"
+        min_prompts: 4
+        min_delta: 4
+
+  - id: "REL-002"
+    name: "Cronbach's alpha >= 0.7"
+    description: "Inter-item reliability of personality dimensions"
+    type: "formula"
+    formula: "cronbach_alpha >= 0.7"
+    assertions:
+      - check: "cronbach_alpha"
+        threshold: 0.7
+
+  # ============================================
+  # BASELINE CONTROLS
+  # ============================================
+  
+  - id: "CTRL-001"
+    name: "Baseline differs from extremes"
+    description: "Baseline should be statistically distinct from both low and high"
+    type: "boolean"
+    assertions:
+      - check: "baseline_different"
+        min_diff: 1.5
+        dims_required: 2
+
+  - id: "CTRL-002"
+    name: "Baseline is not middle-ground default"
+    description: "Baseline scores should vary, not be uniformly ~5"
+    type: "boolean"
+    assertions:
+      - check: "baseline_not_uniform"
+        range_min: 3
+        range_max: 7
+
+# Expected outcome:
+# - INT evals: PASS (internal consistency)
+# - DELTA evals: PASS (conditions differ)
+# - REL evals: PASS (consistent across prompts)
+# - CTRL evals: PASS (baseline properly controlled)

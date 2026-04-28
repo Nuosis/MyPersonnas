@@ -1,0 +1,1 @@
+Data Design resource: https://refactoring.guru/design-patterns/

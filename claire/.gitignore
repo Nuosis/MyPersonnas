@@ -1,0 +1,15 @@
+# Sessions - too big, too personal
+sessions/
+*.jsonl
+
+# Auth - secrets, don't commit
+auth.json
+
+# Temp files
+.DS_Store
+*.swp
+*~
+claire
+
+# Personas - each has own git, not part of MyPi
+personas/

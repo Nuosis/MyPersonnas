@@ -1,0 +1,11 @@
+# Sessions - too big, too personal
+sessions/
+*.jsonl
+
+# Auth - secrets, don't commit
+auth.json
+
+# Temp files
+.DS_Store
+*.swp
+*~

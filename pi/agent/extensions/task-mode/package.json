@@ -1,0 +1,9 @@
+{
+  "name": "task-mode",
+  "version": "1.0.0",
+  "description": "Persist on tasks until success criteria are met",
+  "pi": {
+    "extensions": ["./index.ts"]
+  },
+  "dependencies": {}
+}
